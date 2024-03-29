@@ -2,8 +2,7 @@ package maxicode
 
 import (
 	"bytes"
-	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -21,6 +20,12 @@ func TestEncode(t *testing.T) {
 			expPath:   "maxicode_mode_2.png",
 			mode:      2,
 			inputData: "[)>" + RS + "01" + GS + "96841706672" + GS + "840" + GS + "001" + GS + "1Z12345673" + GS + "UPSN" + GS + "1X2X3X" + GS + "187" + GS + "" + GS + "1/1" + GS + "10" + GS + "N" + GS + "19 SOUTH ST" + GS + "SALTLAKE CITY" + GS + "UT" + RS + EOT,
+		},
+		{
+			desc:      "mode 2 with carriage return char",
+			expPath:   "maxicode_mode_2_cr.png",
+			mode:      2,
+			inputData: "[)>" + RS + "01" + GS + "96948509751" + GS + "840" + GS + "988" + GS + "1Z28945956" + GS + "UPSN" + GS + "4X7V81" + RS + "07P" + string(rune(28)) + ":3 0+\"MY&.M8JMZ*CMB$2-4W#2W6UBTXR/PTKAZ-7H\r" + RS + EOT,
 		},
 		{
 			desc:      "mode 3",
@@ -44,7 +49,7 @@ func TestEncode(t *testing.T) {
 				t.Fatalf(err.Error())
 			}
 
-			expected, err := ioutil.ReadFile(fmt.Sprintf("./testdata/%s", tc.expPath))
+			expected, err := os.ReadFile("./testdata/" + tc.expPath)
 			if err != nil {
 				t.Fatalf("Failed to load testdata picture %q: %v", tc.expPath, err)
 			}
