@@ -1,6 +1,7 @@
 package maxicode
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -286,11 +287,30 @@ func (codewords maxiCodewords) processPrimaryMode3(postcode string, countryCode,
 	codewords[9] = (serviceClass & 0x3f0) >> 4
 }
 
+func determineSet(set []int, i int, allowedSets ...int) int {
+	opt1 := set[i-1]
+	opt2 := set[i+1]
+
+	opt1Allowed := slices.Index(allowedSets, opt1) != -1
+	opt2Allowed := slices.Index(allowedSets, opt2) != -1
+
+	if opt1Allowed && opt2Allowed {
+		return min(opt1, opt2)
+	}
+
+	if opt1Allowed {
+		return opt1
+	}
+
+	if opt2Allowed {
+		return opt2
+	}
+
+	return allowedSets[0]
+}
+
 func (codewords maxiCodewords) processSecondary(mode, eci int, secondaryData string) error {
-	// Format text according to Appendix A.
-	// This code doesn't make use of [Lock in C], [Lock in D]
-	// and [Lock in E] and so is not always the most efficient at
-	// compressing data, but should suffice for most applications.
+	// Format text according to Appendix A
 
 	if len(secondaryData) > 138 {
 		return errors.New("input data is too long")
@@ -322,101 +342,65 @@ func (codewords maxiCodewords) processSecondary(mode, eci int, secondaryData str
 			switch character[i] {
 			// Carriage Return
 			case 13:
-				if (set[i-1] == 5) || (i != (dataLen-1) && (set[i+1] == 5)) {
+				set[i] = determineSet(set, i, 1, 5)
+				if set[i] == 5 {
 					character[i] = 13
-					set[i] = 5
 				} else {
 					character[i] = 0
-					set[i] = 1
 				}
 			// FS
 			case 28:
-				if set[i-1] == 5 {
+				set[i] = determineSet(set, i, 1, 2, 3, 4, 5)
+				if set[i] == 5 {
 					character[i] = 32
-					set[i] = 5
-				} else {
-					set[i] = set[i-1]
 				}
 			// GS
 			case 29:
-				if set[i-1] == 5 {
+				set[i] = determineSet(set, i, 1, 2, 3, 4, 5)
+				if set[i] == 5 {
 					character[i] = 33
-					set[i] = 5
-				} else {
-					set[i] = set[i-1]
 				}
 			// RS
 			case 30:
-				if set[i-1] == 5 {
+				set[i] = determineSet(set, i, 1, 2, 3, 4, 5)
+				if set[i] == 5 {
 					character[i] = 34
-					set[i] = 5
-				} else {
-					set[i] = set[i-1]
 				}
 			// Space
 			case 32:
-				if set[i-1] == 1 {
+				set[i] = determineSet(set, i, 1, 2, 3, 4, 5)
+
+				switch set[i] {
+				case 1:
 					character[i] = 32
-					set[i] = 1
-				}
-
-				if set[i-1] == 2 {
+				case 2:
 					character[i] = 47
-					set[i] = 2
-				}
-
-				if set[i-1] >= 3 {
-					if i != dataLen-1 {
-						if set[i+1] == 1 {
-							character[i] = 32
-							set[i] = 1
-						}
-
-						if set[i+1] == 2 {
-							character[i] = 47
-							set[i] = 2
-						}
-
-						if set[i+1] >= 3 {
-							character[i] = 59
-							set[i] = set[i-1]
-						}
-					} else {
-						character[i] = 59
-						set[i] = set[i-1]
-					}
+				default:
+					character[i] = 59
 				}
 			// Comma
 			case 44:
-				if (set[i-1] == 2) || ((i != (dataLen - 1)) && (set[i+1] == 2)) {
+				set[i] = determineSet(set, i, 1, 2)
+				if set[i] == 2 {
 					character[i] = 48
-					set[i] = 2
-				} else {
-					set[i] = 1
 				}
 			// Full Stop
 			case 46:
-				if (set[i-1] == 2) || ((i != (dataLen - 1)) && (set[i+1] == 2)) {
+				set[i] = determineSet(set, i, 1, 2)
+				if set[i] == 2 {
 					character[i] = 49
-					set[i] = 2
-				} else {
-					set[i] = 1
 				}
 			// Slash
 			case 47:
-				if (set[i-1] == 2) || ((i != (dataLen - 1)) && (set[i+1] == 2)) {
+				set[i] = determineSet(set, i, 1, 2)
+				if set[i] == 2 {
 					character[i] = 50
-					set[i] = 2
-				} else {
-					set[i] = 1
 				}
 			// Colon
 			case 58:
-				if (set[i-1] == 2) || ((i != (dataLen - 1)) && (set[i+1] == 2)) {
+				set[i] = determineSet(set, i, 1, 2)
+				if set[i] == 2 {
 					character[i] = 51
-					set[i] = 2
-				} else {
-					set[i] = 1
 				}
 			}
 		}
@@ -466,76 +450,86 @@ func (codewords maxiCodewords) processSecondary(mode, eci int, secondaryData str
 	idx := 0
 
 	for {
-		if set[idx] != currSet {
+		if (set[idx] != currSet) && (set[idx] != 6) {
 			switch set[idx] {
 			case 1:
-				if (idx+1) < 144 && set[idx+1] == 1 {
-					if (idx+2) < 144 && set[idx+2] == 1 {
-						if (idx+3) < 144 && set[idx+3] == 1 {
-							// Latch A
-							insertPosition(set, character, idx)
-							character[idx] = 63
-							currSet = 1
-							dataLen++
-							idx += 3
+				if currSet == 2 {
+					// Set B
+					if idx+1 < 144 && set[idx+1] == 1 {
+						if idx+2 < 144 && set[idx+2] == 1 {
+							if idx+3 < 144 && set[idx+3] == 1 {
+								// Latch A
+								insertPosition(set, character, idx, &dataLen)
+								character[idx] = 63 // Set B Latch A
+								currSet = 1
+								idx += 3 // Next 3 Set A so skip over
+							} else {
+								// 3 Shift A
+								insertPosition(set, character, idx, &dataLen)
+								character[idx] = 57 // Set B triple shift A
+								idx += 2            // Next 2 Set A so skip over
+							}
 						} else {
-							// 3 Shift A
-							insertPosition(set, character, idx)
-							character[idx] = 57
-							dataLen++
-							idx += 3
+							// 2 Shift A
+							insertPosition(set, character, idx, &dataLen)
+							character[idx] = 56 // Set B double shift A
+							idx++               // Next Set A so skip over
 						}
 					} else {
-						// 2 Shift A
-						insertPosition(set, character, idx)
-						character[idx] = 56
-						dataLen++
-						idx += 2
+						// Shift A
+						insertPosition(set, character, idx, &dataLen)
+						character[idx] = 59 // Set A Shift B
 					}
 				} else {
-					// Shift A
-					insertPosition(set, character, idx)
-					character[idx] = 59
-					dataLen++
-					idx++
+					// All sets other than B only have latch
+					// Latch A
+					insertPosition(set, character, idx, &dataLen)
+					character[idx] = 58 // Sets C,D,E Latch A
+					currSet = 1
 				}
 			case 2:
-				if (idx+1) < 144 && set[idx+1] == 2 {
+				// Set B
+				// If not Set A or next Set B
+				if currSet != 1 || (idx+1 < 144 && set[idx+1] == 2) {
 					// Latch B
-					insertPosition(set, character, idx)
-					character[idx] = 63
+					insertPosition(set, character, idx, &dataLen)
+					character[idx] = 63 // Sets A,C,D,E Latch B
 					currSet = 2
-					dataLen++
-					idx++
 				} else {
+					// Only available from Set A
 					// Shift B
-					insertPosition(set, character, idx)
-					character[idx] = 59
-					dataLen++
-					idx++
+					insertPosition(set, character, idx, &dataLen)
+					character[idx] = 59 // Set B Shift A
 				}
-			case 3:
-				// Shift C
-				insertPosition(set, character, idx)
-				character[idx] = 60
-				dataLen++
-				idx++
-			case 4:
-				// Shift D
-				insertPosition(set, character, idx)
-				character[idx] = 61
-				dataLen++
-				idx++
-			case 5:
-				// Shift E
-				insertPosition(set, character, idx)
-				character[idx] = 62
-				dataLen++
-				idx++
+			case 3, 4, 5:
+				// Set C, D, E
+				// If first and next 3 same set, or not first and previous and next 2 same set
+				if (idx == 0 && idx+3 < 144 && set[idx+1] == set[idx] && set[idx+2] == set[idx] && set[idx+3] == set[idx]) || (idx > 0 && set[idx-1] == set[idx] && idx+2 < 144 && set[idx+1] == set[idx] && set[idx+2] == set[idx]) {
+					if idx == 0 {
+						// Lock in C/D/E
+						insertPosition(set, character, idx, &dataLen)
+						character[idx] = 60 + set[idx] - 3
+						idx++ // Extra bump
+						insertPosition(set, character, idx, &dataLen)
+						character[idx] = 60 + set[idx] - 3
+						idx += 3 // Next 3 same set so skip over
+					} else {
+						// Add single Shift to previous Shift
+						insertPosition(set, character, idx, &dataLen)
+						character[idx-1] = 60 + set[idx] - 3
+						idx += 2 // Next 2 same set so skip over
+					}
+					currSet = set[idx]
+				} else {
+					// Shift C/D/E
+					insertPosition(set, character, idx, &dataLen)
+					character[idx] = 60 + set[idx] - 3
+				}
 			}
+			idx++ // Allow for bump
 		}
-
 		idx++
+
 		if idx >= 144 {
 			break
 		}
@@ -581,35 +575,32 @@ func (codewords maxiCodewords) processSecondary(mode, eci int, secondaryData str
 	// Insert ECI at the beginning of message if needed.
 	// Encode ECI assignment numbers according to table 3.
 	if eci != 0 {
-		insertPosition(set, character, 0)
+		insertPosition(set, character, 0, &dataLen)
 		character[0] = 27 // ECI
 
-		if eci <= 31 {
-			insertPosition(set, character, 1)
+		switch {
+		case eci <= 31:
+			insertPosition(set, character, 1, &dataLen)
 			character[1] = eci
-			dataLen += 2
-		}
 
-		if eci >= 32 && eci <= 1023 {
-			insertPosition(set, character, 1)
-			insertPosition(set, character, 1)
-			insertPosition(set, character, 1)
+		case eci >= 32 && eci <= 1023:
+			insertPosition(set, character, 1, &dataLen)
+			insertPosition(set, character, 1, &dataLen)
+			insertPosition(set, character, 1, &dataLen)
 			character[1] = 0x30 + ((eci >> 12) & 0x03)
 			character[2] = (eci >> 6) & 0x3f
 			character[3] = eci & 0x3f
 			dataLen += 4
-		}
 
-		if eci >= 32768 {
-			insertPosition(set, character, 1)
-			insertPosition(set, character, 1)
-			insertPosition(set, character, 1)
-			insertPosition(set, character, 1)
+		case eci >= 32768:
+			insertPosition(set, character, 1, &dataLen)
+			insertPosition(set, character, 1, &dataLen)
+			insertPosition(set, character, 1, &dataLen)
+			insertPosition(set, character, 1, &dataLen)
 			character[1] = 0x38 + ((eci >> 18) & 0x02)
 			character[2] = (eci >> 12) & 0x3f
 			character[3] = (eci >> 6) & 0x3f
 			character[4] = eci & 0x3f
-			dataLen += 5
 		}
 	}
 
@@ -718,9 +709,11 @@ func (codewords maxiCodewords) secondaryDataCheckOdd(eccLen int) {
 	}
 }
 
-func insertPosition(set, character []int, position int) {
+func insertPosition(set, character []int, position int, dataLen *int) {
 	for i := 143; i > position; i-- {
 		set[i] = set[i-1]
 		character[i] = character[i-1]
 	}
+
+	*dataLen++
 }

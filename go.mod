@@ -1,6 +1,6 @@
 module github.com/ingridhq/maxicode
 
-go 1.17
+go 1.21
 
 require (
 	github.com/fogleman/gg v1.3.0
