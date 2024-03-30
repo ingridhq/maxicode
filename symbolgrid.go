@@ -22,10 +22,6 @@ func (s *SymbolGrid) Draw(multiplier float64) *gg.Context {
 
 	dc := gg.NewContext(int(28*multiplier), int(26.8*multiplier))
 
-	dc.DrawRectangle(0, 0, float64(dc.Width()), float64(dc.Height()))
-	dc.SetRGB(1, 1, 1)
-	dc.Fill()
-
 	// Central bullseye patterns.
 	dc.SetLineWidth(0.67 * multiplier)
 
