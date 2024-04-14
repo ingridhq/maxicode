@@ -10,9 +10,15 @@ Library for creating UPS MaxiCodes written in pure Go
  eci := 0
  scaleFactor := 35.0
  
- maxicode.Encode(mode, eci, tc.inputData).Draw(scaleFactor).SavePNG("maxicode.png")
+ maxicode.Encode(mode, eci, inputData).Draw(scaleFactor).SavePNG("maxicode.png")
 
 ```
+
+Above code will produce the following image:
+
+![MaxiCode Mode 3](testdata/maxicode_mode_3.png)
+
+You can use different scaleFactors to scale maxicodes up/down. Normally scaleFactors should depend on your dpi/dpmm
 
 ## Contributors
  
