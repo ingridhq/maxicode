@@ -1,12 +1,13 @@
 package maxicode
 
 import (
+	"errors"
+	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/ingridhq/maxicode/readsolomon"
-	"github.com/pkg/errors"
 )
 
 // special characters
@@ -546,7 +547,7 @@ func (codewords maxiCodewords) processSecondary(mode, eci int, secondaryData str
 
 			value, err := strconv.Atoi(compressed)
 			if err != nil {
-				return errors.Wrap(err, "failed to convert compressed number")
+				return fmt.Errorf("failed to convert compressed number: %w", err)
 			}
 
 			character[idx] = 31 // NS
