@@ -5,7 +5,6 @@ go 1.21
 require (
 	github.com/fogleman/gg v1.3.0
 	github.com/google/go-cmp v0.5.7
-	github.com/pkg/errors v0.9.1
 )
 
 require (
