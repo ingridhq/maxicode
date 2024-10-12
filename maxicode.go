@@ -89,6 +89,12 @@ var maxiSymbolChar = []int{
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 32, 33, 34, 35, 36,
 }
 
+var (
+	rsEcc10 = readsolomon.NewEncoder(0x43, 10, 1)
+	rsEcc20 = readsolomon.NewEncoder(0x43, 20, 1)
+	rsEcc28 = readsolomon.NewEncoder(0x43, 28, 1)
+)
+
 func Encode(mode, eci int, inputData string) (*SymbolGrid, error) {
 	scmHeader := "[)>" + RS + "01" + GS
 
@@ -660,8 +666,7 @@ func (codewords maxiCodewords) primaryDataCheck() {
 		data[j] = byte(codewords[j])
 	}
 
-	rs := readsolomon.NewEncoder(0x43, eccLen, 1)
-	rs.Encode(dataLen, data, result)
+	getRsEncoder(eccLen).Encode(dataLen, data, result)
 
 	for j := 0; j < eccLen; j++ {
 		codewords[dataLen+j] = int(result[eccLen-1-j])
@@ -681,8 +686,7 @@ func (codewords maxiCodewords) secondaryDataCheckEven(eccLen int) {
 		data[j/2] = byte(codewords[j+20])
 	}
 
-	rs := readsolomon.NewEncoder(0x43, eccLen, 1)
-	rs.Encode(dataLen/2, data, result)
+	getRsEncoder(eccLen).Encode(dataLen/2, data, result)
 
 	for j := 0; j < eccLen; j++ {
 		codewords[dataLen+(2*j)+20] = int(result[eccLen-1-j])
@@ -702,8 +706,7 @@ func (codewords maxiCodewords) secondaryDataCheckOdd(eccLen int) {
 		data[(j-1)/2] = byte(codewords[j+20])
 	}
 
-	rs := readsolomon.NewEncoder(0x43, eccLen, 1)
-	rs.Encode(dataLen/2, data, result)
+	getRsEncoder(eccLen).Encode(dataLen/2, data, result)
 
 	for j := 0; j < eccLen; j++ {
 		codewords[dataLen+(2*j)+1+20] = int(result[eccLen-1-j])
@@ -717,4 +720,15 @@ func insertPosition(set, character []int, position int, dataLen *int) {
 	}
 
 	*dataLen++
+}
+
+func getRsEncoder(eccLen int) *readsolomon.Encoder {
+	switch eccLen {
+	case 10:
+		return rsEcc10
+	case 20:
+		return rsEcc20
+	default:
+		return rsEcc28
+	}
 }
