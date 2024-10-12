@@ -39,14 +39,14 @@ func TestEncode(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			grid, err := Encode(tc.mode, 0, tc.inputData)
 			if err != nil {
-				t.Fatalf(err.Error())
+				t.Fatal(err.Error())
 			}
 
 			buf := bytes.NewBufferString("")
 
 			err = grid.Draw(35.0).EncodePNG(buf)
 			if err != nil {
-				t.Fatalf(err.Error())
+				t.Fatal(err.Error())
 			}
 
 			expected, err := os.ReadFile("./testdata/" + tc.expPath)
