@@ -1,6 +1,6 @@
 package maxicode
 
-import "github.com/fogleman/gg"
+import "github.com/ingridhq/gg"
 
 type SymbolGrid [30 * 33]bool
 
@@ -12,18 +12,18 @@ func (s *SymbolGrid) GetModule(row, column int) bool {
 	return s[30*row+column]
 }
 
-func (s *SymbolGrid) Draw(multiplier float64) *gg.Context {
-	centerX := 13.64 * multiplier
-	centerY := 13.43 * multiplier
+func (s *SymbolGrid) Draw(dpmm float64) *gg.Context {
+	centerX := 13.64 * dpmm
+	centerY := 13.43 * dpmm
 
-	innerRadius := 0.85 * multiplier
-	centerRadius := 2.20 * multiplier
-	outerRadius := 3.54 * multiplier
+	innerRadius := 0.85 * dpmm
+	centerRadius := 2.20 * dpmm
+	outerRadius := 3.54 * dpmm
 
-	dc := gg.NewContext(int(28*multiplier), int(26.8*multiplier))
+	dc := gg.NewContext(int(28*dpmm), int(26.8*dpmm))
 
 	// Central bullseye patterns.
-	dc.SetLineWidth(0.67 * multiplier)
+	dc.SetLineWidth(0.67 * dpmm)
 
 	dc.DrawCircle(centerX, centerY, outerRadius)
 	dc.SetRGB(0, 0, 0)
@@ -46,10 +46,10 @@ func (s *SymbolGrid) Draw(multiplier float64) *gg.Context {
 					rowOffset = 1.32
 				}
 
-				hexRectX := (float64(column)*0.88 + rowOffset) * multiplier
-				hexRectY := (float64(row)*0.76 + 0.76) * multiplier
-				hexRectW := 0.76 * multiplier
-				hexRectH := 0.88 * multiplier
+				hexRectX := (float64(column)*0.88 + rowOffset) * dpmm
+				hexRectY := (float64(row)*0.76 + 0.76) * dpmm
+				hexRectW := 0.76 * dpmm
+				hexRectH := 0.88 * dpmm
 
 				dc.MoveTo(hexRectX+hexRectW*0.5, hexRectY)
 				dc.LineTo(hexRectX+hexRectW, hexRectY+hexRectH*0.25)
