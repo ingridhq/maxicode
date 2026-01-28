@@ -26,7 +26,7 @@ Above code will produce the following image:
 
 ![MaxiCode Mode 3](testdata/maxicode_mode_3.png)
 
-You can use different dpmm to scale maxicodes up/down. Normally scaleFactors should depend on your dpi/dpmm
+You can use different dpmm to scale maxicodes up/down
 
 ## Contributors
  
