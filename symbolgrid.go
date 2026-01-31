@@ -38,27 +38,32 @@ func (s *SymbolGrid) Draw(dpmm float64) *gg.Context {
 	dc.Stroke()
 
 	// Hexagons
-	for row := 0; row < 33; row++ {
-		for column := 0; column < 30; column++ {
-			if s.GetModule(row, column) {
-				rowOffset := 0.88
-				if (row & 1) == 1 {
-					rowOffset = 1.32
-				}
-
-				hexRectX := (float64(column)*0.88 + rowOffset) * dpmm
-				hexRectY := (float64(row)*0.76 + 0.76) * dpmm
-				hexRectW := 0.76 * dpmm
-				hexRectH := 0.88 * dpmm
-
-				dc.MoveTo(hexRectX+hexRectW*0.5, hexRectY)
-				dc.LineTo(hexRectX+hexRectW, hexRectY+hexRectH*0.25)
-				dc.LineTo(hexRectX+hexRectW, hexRectY+hexRectH*0.75)
-				dc.LineTo(hexRectX+hexRectW*0.5, hexRectY+hexRectH)
-				dc.LineTo(hexRectX, hexRectY+hexRectH*0.75)
-				dc.LineTo(hexRectX, hexRectY+hexRectH*0.25)
-				dc.Fill()
+	for row := range 33 {
+		for column := range 30 {
+			if !s.GetModule(row, column) {
+				continue
 			}
+
+			rowOffset := 0.88
+			if (row & 1) == 1 {
+				rowOffset = 1.32
+			}
+
+			col := float64(column)
+			row := float64(row)
+
+			hexRectX := (float64(col*0.88) + rowOffset) * dpmm
+			hexRectY := (float64(row*0.76) + 0.76) * dpmm
+			hexRectW := 0.76 * dpmm
+			hexRectH := 0.88 * dpmm
+
+			dc.MoveTo(hexRectX+float64(hexRectW*0.5), hexRectY)
+			dc.LineTo(hexRectX+hexRectW, hexRectY+float64(hexRectH*0.25))
+			dc.LineTo(hexRectX+hexRectW, hexRectY+float64(hexRectH*0.75))
+			dc.LineTo(hexRectX+float64(hexRectW*0.5), hexRectY+hexRectH)
+			dc.LineTo(hexRectX, hexRectY+float64(hexRectH*0.75))
+			dc.LineTo(hexRectX, hexRectY+float64(hexRectH*0.25))
+			dc.Fill()
 		}
 	}
 
